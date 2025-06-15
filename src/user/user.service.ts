@@ -5,6 +5,10 @@ import { UpdateUserDto } from "./dto/user-update.dto";
 
 @Injectable()
 export class UserService{
+    test(){
+        return 'Biswo';
+    }
+
     create(createUserDto: CreateUserDto){
         return createUserDto;
     }

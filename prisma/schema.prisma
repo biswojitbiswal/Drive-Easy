@@ -10,7 +10,8 @@ datasource db {
 
 model User{
   id              String              @id @default(auto()) @map("_id") @db.ObjectId
-  fullname        String
+  firstName       String
+  lastName        String
   email           String              @unique
   phone           String?
   password        String
@@ -18,4 +19,11 @@ model User{
   isVerify        Boolean             @default(false)
   expiryTime      DateTime
   image           String?
+  role      UserRole @default(USER)
+}
+
+enum UserRole {
+  USER
+  VENDOR
+  ADMIN
 }
