@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-
 }
 
 datasource db {
@@ -8,22 +7,94 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User{
-  id              String              @id @default(auto()) @map("_id") @db.ObjectId
-  firstName       String
-  lastName        String
-  email           String              @unique
-  phone           String?
-  password        String
-  otp             String
-  isVerify        Boolean             @default(false)
-  expiryTime      DateTime
-  image           String?
-  role      UserRole @default(USER)
+model User {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  email       String     @unique
+  firstName   String
+  lastName    String
+  password    String
+  phone       String?
+  profileImg  String?
+  isVerify    Boolean    @default(false)
+  tcAgree     Boolean    @default(true)
+  otp         String?
+  expiryTime  DateTime?
+  rtHash      String?
+  role        UserRole   @default(USER)
+  dl          DL?
+  addresses   Address[]
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+type DL {
+  dlNo    String?
+  dob     DateTime?
+}
+
+type Address {
+  label     AddressLabel
+  street    String
+  city      String
+  state     String
+  pincode   String
+  landmark  String?
+}
+
+enum AddressLabel {
+  HOME
+  WORK
+  OTHER
 }
 
 enum UserRole {
   USER
-  VENDOR
+  AGENT
   ADMIN
+}
+
+model Car {
+  id                       String             @id @default(auto()) @map("_id") @db.ObjectId  
+  model                    String
+  type                     CarType
+  fuel                     FuelType
+  seats                    Int
+  pricePerDay              Int
+  images                   String[]
+
+  transmission             TransmissionType
+  mileage                  String
+  color                    String
+  registrationNo           String
+
+  isAvailable              Boolean            @default(false)
+
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
+}
+
+enum CarType {
+  SUV
+  SEDAN
+  HATCHBACK
+  COUPE
+  CONVERTIBLE
+  MPV
+  TRUCK
+  VAN
+}
+
+enum FuelType {
+  PETROL
+  DIESEL
+  ELECTRIC
+  HYBRID
+  CNG
+}
+
+enum TransmissionType {
+  MANUAL
+  AUTOMATIC
+  SEMI_AUTOMATIC
 }

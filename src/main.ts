@@ -14,8 +14,10 @@ async function bootstrap() {
   const isProd = process.env.ENV === 'PROD'
 
   const Port = isProd ? process.env.PROD_PORT : process.env.DEV_PORT
-  //Implement CORS policy
-  const app = await NestFactory.create(AppModule);
+
+  const app = await NestFactory.create(AppModule, {
+    cors: true,
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({
