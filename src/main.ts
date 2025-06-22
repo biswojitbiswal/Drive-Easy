@@ -4,6 +4,9 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import * as basicAuth from 'express-basic-auth'
 import * as dotenv from 'dotenv';
+import { ResponseInterceptor } from './common/interceptors';
+import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
+import * as cookieParser from 'cookie-parser';
 
 
 dotenv.config();
@@ -15,9 +18,15 @@ async function bootstrap() {
 
   const Port = isProd ? process.env.PROD_PORT : process.env.DEV_PORT
 
-  const app = await NestFactory.create(AppModule, {
-    cors: true,
+  const app = await NestFactory.create(AppModule);
+
+  app.use(cookieParser());
+
+  app.enableCors({
+    origin: 'http://localhost:5173', // ✅ your frontend origin
+    credentials: true,               // ✅ allow cookies
   });
+
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -63,6 +72,9 @@ async function bootstrap() {
       persistAuthorization: true,
     },
   });
+
+  app.useGlobalInterceptors(new ResponseInterceptor());
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
   await app.listen(Port || 3000, () => {
     console.log(`App is Running on Port ${Port}`)

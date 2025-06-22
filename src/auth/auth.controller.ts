@@ -1,14 +1,16 @@
 // src/auth/auth.controller.ts
-import { Controller, Post, Body, Get, UseInterceptors, UploadedFile, HttpStatus, HttpCode, Param } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseInterceptors, UploadedFile, HttpStatus, HttpCode, Param, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Public } from 'src/common/decorators/public.decorator';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { UserRole } from '@prisma/client'
 import { FileInterceptor } from '@nestjs/platform-express';
 import { storage } from 'src/claudinary/claudinary.config';
-import { ResetPasswordDto, SignupDto, VerifyOTPDto } from './dtos/auth.dto';
+import { ResetPasswordDto, SigninDto, SignupDto, VerifyOTPDto } from './dtos/auth.dto';
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Tokens } from './types';
+import { Request } from 'express';
+
 
 
 @ApiTags('Authentication')
@@ -29,14 +31,25 @@ export class AuthController {
   }
 
   @Public()
-  @Post('verify-code/:email')
+  @Post('verify-code/:token')
   @HttpCode(200)
   @ApiResponse({ status: 201, description: 'OTP Verification successfully' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   verifyOtp(
-    @Param('email') email: string,
+    @Param('token') token: string,
     @Body() dto: VerifyOTPDto){
-    return this.authService.verifyOtp(email, dto.otp);
+    return this.authService.verifyOtp(token, dto.code);
+  }
+
+
+  @Public()
+  @Post('resend-code/:token')
+  @HttpCode(200)
+  @ApiResponse({ status: 201, description: 'Resend OTP successfully' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  resendOtp(
+    @Param('token') token: string,){
+    return this.authService.resendOTP(token);
   }
 
 
@@ -45,17 +58,27 @@ export class AuthController {
   @HttpCode(200)
   @ApiResponse({ status: 201, description: 'User Signin successfull' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  signin(@Body() dto: SignupDto){
+  signin(@Body() dto: SigninDto){
     return this.authService.signin(dto)
   }
 
   @Public()
   @Post('refresh-token')
   @HttpCode(200)
-  @ApiResponse({ status: 201, description: 'Access Toke Generated' })
+  @ApiResponse({ status: 200, description: 'Access Token Generated' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  refreshToken(){
-    
+  refreshToken(@Req() req: Request){
+    const token = req.cookies.refreshToken;
+
+    if (!token) {
+      return {
+        error: 1,
+        status: 'failed',
+        message: 'No Refresh Token Found in Cookie'
+      }
+    }
+
+    return this.authService.refreshToken(token)
   }
 
   // @Public()

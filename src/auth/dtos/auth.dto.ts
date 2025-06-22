@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsBoolean, IsEmail, IsNotEmpty, IsString } from "class-validator";
+import { IsBoolean, IsEmail, IsNotEmpty, IsOptional, IsString } from "class-validator";
 
 export class SignupDto{
     @ApiProperty()
@@ -27,8 +27,10 @@ export class VerifyOTPDto{
     @ApiProperty()
     @IsString()
     @IsNotEmpty()
-    otp: string
+    code: string
 }
+
+
 
 export class SigninDto{
     @ApiProperty()
