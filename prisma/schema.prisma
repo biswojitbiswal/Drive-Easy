@@ -8,39 +8,52 @@ datasource db {
 }
 
 model User {
-  id          String     @id @default(auto()) @map("_id") @db.ObjectId
-  email       String     @unique
-  firstName   String
-  lastName    String
-  password    String
-  phone       String?
-  profileImg  String?
-  isVerify    Boolean    @default(false)
-  tcAgree     Boolean    @default(true)
-  otp         String?
-  expiryTime  DateTime?
-  rtHash      String?
-  role        UserRole   @default(USER)
-  dl          DL?
-  addresses   Address[]
+  id                          String     @id @default(auto()) @map("_id") @db.ObjectId
+  email                       String     @unique
+  firstName                   String
+  lastName                    String
+  password                    String
+  phone                       String?
+  profileImg                  String?
+  isVerify                    Boolean    @default(false)
+  tcAgree                     Boolean    @default(true)
+  otp                         String?
+  expiryTime                  DateTime
+  rtHash                      String?
+  role                        UserRole   @default(USER)
 
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+ // For agents
+  licenseNo                   String?
+  experience                  String?
+  identityProof               String?
+  rating                      Float?
+  ratingsCount                Int?
+  agentProfileComplete        Boolean                 @default(false)
+  isActive                    Boolean?                @default(false)
+
+  addresses                   Address[]
+
+  bookings                    Booking[]               @relation("UserBookings")
+  assignedBookings            Booking[]               @relation("AssignedBookings")
+
+  createdAt                   DateTime                @default(now())
+  updatedAt                   DateTime                @updatedAt
 }
 
-type DL {
-  dlNo    String?
-  dob     DateTime?
-}
-
-type Address {
+model Address {
+  id        String        @id @default(auto()) @map("_id") @db.ObjectId
   label     AddressLabel
   street    String
   city      String
   state     String
   pincode   String
   landmark  String?
+
+  user      User          @relation(fields: [userId], references: [id])
+  userId    String        @db.ObjectId
+  createdAt DateTime      @default(now())
 }
+
 
 enum AddressLabel {
   HOME
@@ -68,7 +81,12 @@ model Car {
   color                    String
   registrationNo           String
 
-  isAvailable              Boolean            @default(false)
+  gst                      Float?
+  logistic                 Int?
+
+  isAvailable              Boolean            @default(true)
+
+  bookings                                Booking[]
 
   createdAt                DateTime           @default(now())
   updatedAt                DateTime           @updatedAt
@@ -97,4 +115,69 @@ enum TransmissionType {
   MANUAL
   AUTOMATIC
   SEMI_AUTOMATIC
+}
+
+model Booking {
+  id                  String             @  id @default(auto()) @map("_id") @db.ObjectId
+  bookingId           String
+
+  bookedById          String             @db.ObjectId
+  bookedBy            User               @relation("UserBookings", fields: [bookedById], references: [id])
+
+  assignedAgentId     String?            @db.ObjectId
+  assignedAgent       User?              @relation("AssignedBookings", fields: [assignedAgentId], references: [id])
+
+  bookedCar           Car                @relation(fields: [bookedCarId], references: [id])
+  bookedCarId         String             @db.ObjectId
+
+  bookingName         String
+  contact             String
+  dlNo                String
+  dob                 DateTime
+
+  pickupDt            DateTime
+  dropupDt            DateTime
+  pickupLocation      String
+  dropupLocation      String
+
+  price               Float
+  gst                 Float
+  logisticCharge      Float
+  gstAmount           Float
+  totalAmount         Float
+
+  customerOTP         String
+  agentOTP            String
+  customerOtpVerified Boolean               @default(false)
+  agentOtpverified    Boolean               @default(false)
+
+  deliveryStatus      DeliveryStatus
+  status              Status
+
+  paymentId           String
+  paymentSignature    String
+  paymentStatus       PaymentStatus
+
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+}
+
+enum DeliveryStatus{
+  PENDING
+  DELIVERED
+  RETURNED
+}
+
+enum Status{
+  PENDING
+  CONFIRM
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus{
+  PENDING
+  SUCCESS
+  FAILED
 }

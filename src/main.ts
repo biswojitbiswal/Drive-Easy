@@ -7,6 +7,8 @@ import * as dotenv from 'dotenv';
 import { ResponseInterceptor } from './common/interceptors';
 import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
 import * as cookieParser from 'cookie-parser';
+import { AtGuard } from './common/guards/at.guard';
+import { RolesGuard } from './common/guards/roles.guard';
 
 
 dotenv.config();

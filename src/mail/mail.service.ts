@@ -125,4 +125,56 @@ export class MailService {
       return { success: false, error: error.message };
     }
   }
+
+  async sendResetPasswordEmail(to: string, fullName: string, resetLink: string) {
+    const mailOptions = {
+      from: process.env.GMAIL_USER,
+      to,
+      subject: '🔐 Reset Your DriveEasy Password',
+      html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+  <!-- Header -->
+  <div style="background: linear-gradient(135deg, #ea580c, #f97316); padding: 30px; text-align: center; border-radius: 12px 12px 0 0;">
+    <h1 style="color: white; margin: 0; font-size: 24px;">🔐 DriveEasy</h1>
+    <p style="color: rgba(255,255,255,0.9); margin: 5px 0 0 0; font-size: 14px;">Secure your account effortlessly</p>
+  </div>
+
+  <!-- Content -->
+  <div style="padding: 30px;">
+    <h2 style="color: #1e293b; margin: 0 0 15px 0;">Hello, ${fullName}</h2>
+    <p style="color: #475569; line-height: 1.6;">We received a request to reset your password. If this was you, click the button below to create a new password.</p>
+
+    <!-- CTA Button -->
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${resetLink}" style="background: linear-gradient(135deg, #f97316, #ea580c); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 16px; box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);">
+        🔁 Reset Password
+      </a>
+    </div>
+
+    <p style="color: #64748b; font-size: 14px; line-height: 1.6;">If you didn't request a password reset, you can safely ignore this email — your account is secure.</p>
+    
+    <!-- Security Notice -->
+    <div style="background-color: #fff7ed; border-left: 4px solid #f97316; padding: 15px; margin: 20px 0; border-radius: 4px;">
+      <p style="margin: 0; color: #9a3412; font-size: 14px; font-weight: 500;">⚠️ Security Tip</p>
+      <p style="margin: 8px 0 0 0; color: #c2410c; font-size: 13px;">This link will expire in 15 minutes for your security.</p>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div style="background-color: #f8fafc; padding: 20px; text-align: center; border-radius: 0 0 12px 12px; border-top: 1px solid #e2e8f0;">
+    <p style="margin: 0; color: #6b7280; font-size: 14px;">Need help? Reach out anytime.<br><strong>The DriveEasy Team</strong></p>
+    <p style="margin: 10px 0 0 0; color: #94a3b8; font-size: 12px;">© 2024 DriveEasy - Your Journey, Simplified</p>
+  </div>
+</div>`
+    };
+
+    try {
+      await this.transporter.sendMail(mailOptions);
+      console.log('Reset password email sent successfully');
+      return { success: true, message: 'Reset password email sent successfully' };
+    } catch (error) {
+      console.error('Error sending reset password email:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
 }
