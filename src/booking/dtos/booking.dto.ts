@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsDateString, IsNotEmpty, isNotEmpty, IsString } from "class-validator";
+import { Status } from "@prisma/client";
+import { IsDateString, IsEnum, IsNotEmpty, isNotEmpty, IsOptional, IsString } from "class-validator";
 
 export class BookingDto{
     @ApiProperty()
@@ -47,3 +48,5 @@ export class BookingDto{
     @IsNotEmpty()
     dropupLocation: string
 }
+
+

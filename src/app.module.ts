@@ -8,6 +8,7 @@ import { AuthModule } from "./auth/auth.module";
 import { AddressModule } from "./address/address.module";
 import { CarModule } from "./car/car.module";
 import { BookingModule } from "./booking/booking.module";
+import { PaymentModule } from "./payment/payment.module";
 
 @Module({
   imports: [
@@ -18,7 +19,8 @@ import { BookingModule } from "./booking/booking.module";
     AuthModule,
     AddressModule,
     CarModule,
-    BookingModule
+    BookingModule,
+    PaymentModule
   ],
   providers: [
     {

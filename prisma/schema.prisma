@@ -146,17 +146,19 @@ model Booking {
   gstAmount           Float
   totalAmount         Float
 
-  customerOTP         String
-  agentOTP            String
-  customerOtpVerified Boolean               @default(false)
-  agentOtpverified    Boolean               @default(false)
+  customerOTP         String?
+  agentOTP            String?
+  customerOtpVerified Boolean?               @default(false)
+  agentOtpverified    Boolean?               @default(false)
 
   deliveryStatus      DeliveryStatus
   status              Status
 
-  paymentId           String
-  paymentSignature    String
-  paymentStatus       PaymentStatus
+  paymentId           String?
+  paymentSignature    String?
+  paymentStatus       PaymentStatus?
+
+  invoice             Invoice?            @relation("BookingInvoice")
 
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
@@ -166,6 +168,7 @@ enum DeliveryStatus{
   PENDING
   DELIVERED
   RETURNED
+  CANCELLED
 }
 
 enum Status{
@@ -181,3 +184,26 @@ enum PaymentStatus{
   SUCCESS
   FAILED
 }
+
+
+model Invoice {
+  id                  String             @id @default(auto()) @map("_id") @db.ObjectId
+  invoiceId           String             @unique
+
+  bookingId           String             @unique @db.ObjectId
+  booking             Booking            @relation("BookingInvoice", fields: [bookingId], references: [id])
+
+  invoiceDate         DateTime           @default(now())
+
+  status              InvoiceStatus
+  invoiceUrl          String?
+
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+}
+
+enum InvoiceStatus{
+  PENDING
+  PAID
+}
+
