@@ -5,10 +5,11 @@ import { APP_GUARD } from "@nestjs/core";
 import { AtGuard } from "./common/guards/at.guard";
 import { RolesGuard } from "./common/guards/roles.guard";
 import { AuthModule } from "./auth/auth.module";
-import { AddressModule } from "./address/address.module";
 import { CarModule } from "./car/car.module";
 import { BookingModule } from "./booking/booking.module";
 import { PaymentModule } from "./payment/payment.module";
+import { LikeModule } from "./like/like.module";
+import { CarRatingModule } from "./car-rating/car-rating.module";
 
 @Module({
   imports: [
@@ -17,10 +18,11 @@ import { PaymentModule } from "./payment/payment.module";
     }),
     // other modules...
     AuthModule,
-    AddressModule,
     CarModule,
     BookingModule,
-    PaymentModule
+    PaymentModule,
+    LikeModule,
+    CarRatingModule
   ],
   providers: [
     {

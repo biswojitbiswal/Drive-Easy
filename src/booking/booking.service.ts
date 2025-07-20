@@ -6,10 +6,14 @@ import { calculateHourDifference } from "src/common/utils/calculate-hour";
 import { DeliveryStatus, Status } from "@prisma/client";
 import { Pagination } from "src/common/decorators/pagination.decorator";
 import { PaginationDto } from "src/common/dto/pagination.dto";
+import { PaymentService } from "src/payment/payment.service";
 
 @Injectable({})
 export class BookingService {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly payment: PaymentService
+    ) { }
 
     async create(userId: string, dto: BookingDto) {
         try {
@@ -119,7 +123,7 @@ export class BookingService {
     }
 
 
-    async cancelBooking(id: string) {
+    async cancelBooking(id: string, {reason}: { reason: string }) {
         try {
             const booking = await this.prisma.booking.findUnique({
                 where: { id }
@@ -133,18 +137,32 @@ export class BookingService {
                 throw new BadRequestException("Booking Can't Be Cancelled");
             }
 
-            await this.prisma.booking.update({
+            const refund = await this.payment.refundPayment(booking.id)
+
+            const updatedBooking = await this.prisma.booking.update({
                 where: { id },
                 data: {
                     status: 'CANCELLED',
-                    customerOTP: ''
+                    customerOTP: '',
+                    deliveryStatus: 'CANCELLED',
+                    cancellationReason: reason || 'Cancelled By DriveEasy'
                 }
             });
+
+            await this.prisma.invoice.updateMany({
+                where: { bookingId: booking.id },
+                data: { status: 'REFUNDED' }
+            });
+
+            return {
+                message: "Booking cancelled and refunded successfully",
+                data: {updatedBooking, refund}
+            };
         } catch (error) {
             if (error instanceof HttpException) {
                 throw error;
             }
-
+            console.log(error)
             throw new InternalServerErrorException("Something Went Wrong");
         }
     }
@@ -153,9 +171,13 @@ export class BookingService {
 
     async getBookingByUserId(userId: string) {
         try {
-            console.log("chcked", userId)
             const bookings = await this.prisma.booking.findMany({
-                where: { bookedById: userId },
+                where: { 
+                    bookedById: userId,
+                    NOT: {
+                        status: 'PENDING'
+                    }
+                },
                 include: {
                     assignedAgent: {
                         select: {
@@ -205,7 +227,6 @@ export class BookingService {
             if (error instanceof HttpException) {
                 throw error;
             }
-            console.log(error)
             throw new InternalServerErrorException("Something Went Wrong")
         }
     }

@@ -21,12 +21,11 @@ export class PaymentController {
 
     }
 
-
+    @Post('verify')
     @UseGuards(AtGuard)
     @ApiOperation({ summary: "Verify Payment" })
     @ApiResponse({ status: 200, description: "Payment Verified Successfull" })
     @ApiResponse({ status: 401, description: "Unauthorized" })
-    @Post('verify')
     async verifyPayment(@Body() body: any) {
         const { razorpay_order_id, razorpay_payment_id, razorpay_signature, bookingId } = body;
 
@@ -36,6 +35,16 @@ export class PaymentController {
             razorpay_payment_id,
             razorpay_signature,
         );
+    }
+
+    @Post('refund')
+    @UseGuards(AtGuard)
+    @ApiOperation({ summary: "Refund Payment" })
+    @ApiResponse({ status: 200, description: "Refund Successful" })
+    @ApiResponse({ status: 400, description: "Invalid Request" })
+    async refundPayment(@Body() body: { bookingId: string }) {
+        const { bookingId } = body;
+        return await this.paymentService.refundPayment(bookingId);
     }
 
 }

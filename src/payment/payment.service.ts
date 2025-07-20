@@ -4,7 +4,8 @@ import * as crypto from 'crypto';
 import { InvoiceService } from 'src/invoice/invoice.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { assignAgent } from 'src/common/utils/assigned-agent.util';
-import {generateOtp} from '../common/utils/generate-otp'
+import { generateOtp } from '../common/utils/generate-otp'
+import { PaymentStatus } from '@prisma/client';
 
 
 @Injectable()
@@ -24,7 +25,7 @@ export class PaymentService {
     async createOrder(amount: number, currency = 'INR') {
         try {
             const options = {
-                amount: amount * 100,
+                amount: Math.round(amount * 100),
                 currency,
                 receipt: `rcpt_${Date.now()}`,
             };
@@ -82,7 +83,7 @@ export class PaymentService {
 
             return {
                 message: 'Payment Successful',
-                data: {booking, invoice}
+                data: { booking, invoice }
             }
 
         } catch (error) {
@@ -91,6 +92,35 @@ export class PaymentService {
         }
     }
 
+
+    async refundPayment(bookingId: string) {
+        try {
+            const booking = await this.prisma.booking.findUnique({
+                where: { id: bookingId },
+            });
+
+            if (!booking) throw new Error("Booking not found");
+            if (!booking.paymentId) throw new Error("No payment ID found for this booking");
+            if (booking.paymentStatus === 'REFUNDED') throw new Error("Already Refunded");
+
+            const refund = await this.razorpay.payments.refund(booking.paymentId);
+
+            const updatedBooking = await this.prisma.booking.update({
+                where: { id: bookingId },
+                data: {
+                    paymentStatus: 'REFUNDED',
+                    refundId: refund.id,
+                    refundAmount: refund.amount / 100,
+                    refundDate: new Date(refund.created_at * 1000),
+                },
+            });
+
+            return refund;
+        } catch (error) {
+            console.error("Refund Error:", error);
+            throw new InternalServerErrorException("Refund failed: " + error.message);
+        }
+    }
 
 
 }

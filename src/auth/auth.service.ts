@@ -225,12 +225,12 @@ export class AuthService {
         data: { rtHash: hashedRt }
       })
 
-      const { id, firstName, lastName, email, role, agentProfileComplete } = user
+      const { id, firstName, lastName, email, role, profileImg, agentProfileComplete } = user
 
       return {
         message: "Signin Successful",
         data: {
-          user: { id, firstName, lastName, email, role, agentProfileComplete },
+          user: { id, firstName, lastName, email, role, profileImg, agentProfileComplete },
           accessToken,
           refreshToken
         }
@@ -335,21 +335,13 @@ export class AuthService {
       })
 
       if (!user) {
-        return {
-          error: 1,
-          status: 'failed',
-          message: 'User Not Found'
-        }
+        throw new NotFoundException("User Not Found")
       }
 
       const passwordMatch = await bcrypt.compare(dto.oldPassword, user.password)
 
       if (!passwordMatch) {
-        return {
-          error: 1,
-          status: 'failed',
-          message: 'Inavlid Credential'
-        }
+        throw new BadRequestException("Invalid Credentials")
       }
 
       const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
@@ -362,18 +354,14 @@ export class AuthService {
       })
 
       return {
-        error: 0,
-        status: 'success',
         message: "Reset Password Successful",
       }
     } catch (error) {
-      console.log(error)
-      return {
-        error: 1,
-        status: 'failed',
-        message: 'Intetnal Server Error',
-        data: error
+      if(error instanceof HttpException){
+        throw error;
       }
+
+      throw new InternalServerErrorException("Internal Server Error")
     }
   }
 
@@ -455,6 +443,7 @@ export class AuthService {
   // update user data
   async update(id: string, dto: UpdateProfileDto, profileImg, identityProof) {
     try {
+      console.log(dto)
       const user = await this.prisma.user.findUnique({ where: { id } });
 
       if (!user) {

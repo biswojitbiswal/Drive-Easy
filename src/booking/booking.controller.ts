@@ -38,6 +38,21 @@ export class BookingController{
         return await this.bookingService.getBookingByUserId(userId)
     }
 
+    @Patch('cancel/:id')
+    @UseGuards(AtGuard)
+    @ApiOperation({summary: "Booking Cancel"})
+    @ApiResponse({status: 200, description: 'Booking Cancelled Successfully'})
+    @ApiResponse({status: 401, description: "Unautorized"})
+    async cancelBooking(@Param('id') id: string,
+    @Body() reason: { reason: string }
+){
+    console.log(id);
+    console.log(reason);
+    
+    
+        return await this.bookingService.cancelBooking(id, reason)
+    }
+
 
     @Get(':id')
     @UseGuards(AtGuard)
@@ -61,15 +76,7 @@ export class BookingController{
         return bookings;
     }
 
-    @Patch(':id')
-    @UseGuards(AtGuard)
-    @Roles(UserRole.ADMIN, UserRole.USER)
-    @ApiOperation({summary: "Booking Cancel"})
-    @ApiResponse({status: 200, description: 'Booking Cancelled Successfully'})
-    @ApiResponse({status: 401, description: "Unautorized"})
-    async cancelBooking(@Param('id') id: string){
-        return await this.bookingService.cancelBooking(id)
-    }
+    
 
 
 

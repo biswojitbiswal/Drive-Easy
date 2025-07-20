@@ -37,6 +37,7 @@ export class AuthController {
   ) {
     const profileImg = files.find(file => file.fieldname === 'profileImg');
     const identityProof = files.find(file => file.fieldname === 'identityProof');
+    console.log(dto)
 
     return this.authService.update(id, dto, profileImg, identityProof);
   }

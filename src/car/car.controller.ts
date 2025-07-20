@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UploadedFiles, UseGuards, UseInterceptors } from "@nestjs/common";
+import { Body, Controller, Delete, Get, InternalServerErrorException, Param, Patch, Post, Query, Req, UploadedFiles, UseGuards, UseInterceptors } from "@nestjs/common";
 import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { CarService } from "./car.service";
 import { Roles } from "src/common/decorators/role.decorator";
@@ -10,6 +10,8 @@ import { AtGuard } from "src/common/guards/at.guard";
 import { RolesGuard } from "src/common/guards/roles.guard";
 import { Public } from "src/common/decorators/public.decorator";
 import { PaginationDto } from "src/common/dto/pagination.dto";
+import { GetUserId } from "src/common/decorators/get-user-id.decorator";
+import { OptionalJwtAuthGuard } from "src/common/guards/optional-jwt.guard";
 
 
 @ApiTags('Car')
@@ -37,29 +39,56 @@ export class CarController {
         return this.carService.add(dto, files ?? [])
     }
 
+    @UseGuards(OptionalJwtAuthGuard)
     @Public()
     @Get()
     @ApiOperation({ summary: "Get All Car" })
     @ApiResponse({ status: 200, description: 'Cars Retrived Successfully' })
     @ApiResponse({ status: 404, description: 'Car Not Found' })
-    async getAll(@Query() dto: PaginationDto) {
+    async getAll(@Query() dto: PaginationDto, @GetUserId() userId: string) {
         try {
+
             const cars = await this.carService.getAll(dto, 'car', {
-                where: {}
-            })
+                where: {},
+                include: {
+                    likes: true,
+                    ratings: true
+                }
+            });
+
+            const carsWithLikedFlag = cars.data.map(car => {
+                const liked = userId
+                    ? car.likes.some((like) => like.userId.toString() === userId)
+                    : false;
+
+                const totalRatings = car.ratings.length;
+
+                const totalReviews = car.ratings.filter(r => r.comment?.trim()).length;
+
+                const averageRating = totalRatings > 0
+                    ? car.ratings.reduce((sum, r) => sum + r.rating, 0) / totalRatings
+                    : 0;
+
+                return {
+                    ...car,
+                    liked,
+                    averageRating: +averageRating.toFixed(1),
+                    totalRatings,
+                    totalReviews,
+                };
+            });
 
             return {
-                error: 0,
-                status: 'success',
                 message: "Cars Retrieved Successfully",
-                ...cars
+                data: {
+                    total: cars.total,
+                    page: cars.page,
+                    limit: cars.limit,
+                    data: carsWithLikedFlag
+                }
             }
         } catch (error) {
-            return {
-                error: 1,
-                status: 'failed',
-                message: error.message || "Something Went Wrong"
-            }
+            throw new InternalServerErrorException("Internal Server Error")
         }
     }
 
@@ -69,7 +98,7 @@ export class CarController {
     @ApiOperation({ summary: "Get Statistics Of Cars" })
     @ApiResponse({ status: 200, description: 'Car Statistics Retrived Successfully' })
     @ApiResponse({ status: 403, description: 'Forbidden' })
-    async carStats(){
+    async carStats() {
         return await this.carService.carStats()
     }
 
@@ -79,7 +108,7 @@ export class CarController {
     @ApiOperation({ summary: "Get Car By ID" })
     @ApiResponse({ status: 200, description: 'Car Retrived Successfully' })
     @ApiResponse({ status: 404, description: 'Car Not Found' })
-    async get(@Param('id') id: string){
+    async get(@Param('id') id: string) {
         return this.carService.get(id)
     }
 
@@ -90,7 +119,7 @@ export class CarController {
     @ApiResponse({ status: 200, description: 'Car Deleted Successfully' })
     @ApiResponse({ status: 403, description: 'Forbidden' })
     @ApiResponse({ status: 404, description: 'Car Not Found' })
-    async delete(@Param('id') id: string){
+    async delete(@Param('id') id: string) {
         return this.carService.delete(id)
     }
 
@@ -106,10 +135,10 @@ export class CarController {
         @Param('id') id: string,
         @Body() dto: UpdateCarDto,
         @UploadedFiles() files?: Express.Multer.File[],
-    ){
+    ) {
         console.log(files)
         return this.carService.update(id, dto, files ?? [])
     }
 
-    
+
 }
